@@ -36,20 +36,22 @@ def create_install_directory
 end
 
 def install_newrelic
-  version = nil
-  jar_file = nil
+  zip_file = 'newrelic-java.zip'
+  version = new_resource.version
+  version = 'current' if version == 'latest'
+  https_download = "https://download.newrelic.com/newrelic/java-agent/newrelic-agent/#{version}/#{zip_file}"
 
-  if new_resource.version == 'latest'
-    version = 'current'
+  cache_dir = Chef::Config[:file_cache_path]
+  tmp_file = "#{cache_dir}/#{zip_file}"
 
-    url_content = open('https://download.newrelic.com/newrelic/java-agent/newrelic-agent/current/') { |f| f.read.lines.grep(/jar/i).to_s }
-    jar_file = url_content.split(/\W+jar/).first.to_s.split('\\"').last + '.jar'
-  else
-    version = new_resource.version
-    jar_file = 'newrelic.jar'
+  remote_file tmp_file do
+    source https_download
+    mode '0664'
+    action :create
+    notifies :run, "bash[unzip-#{tmp_file}]", :immediately
   end
 
-  https_download = "https://download.newrelic.com/newrelic/java-agent/newrelic-agent/#{version}/#{jar_file}"
+  package 'unzip'
 
   if new_resource.app_location.nil?
     app_location = new_resource.install_dir
@@ -57,23 +59,18 @@ def install_newrelic
     app_location = new_resource.app_location
   end
 
-  # If we are installing it using java, just cache the file
-  if new_resource.execute_agent_action == true
-    jarfile_location = "#{Chef::Config['file_cache_path']}/newrelic.jar"
-  else
-    jarfile_location = "#{app_location}/newrelic.jar"
+  bash "unzip-#{tmp_file}" do
+    user new_resource.app_user
+    group new_resource.app_group
+    action :nothing
+    code <<-EOH
+      unzip -oj "#{tmp_file}" "newrelic/newrelic.jar" -d "#{app_location}"
+    EOH
   end
-
-  remote_file jarfile_location do
-    source https_download
-    owner 'root'
-    group 'root'
-    mode 0664
-    action :create
-  end
+  
 
   execute "newrelic_install_jar_file" do
-    command "sudo java -jar #{jar_file} -s #{app_location} install"
+    command "sudo java -jar newrelic.jar -s #{app_location} install"
     only_if { new_resource.execute_agent_action == true }
   end
 end
