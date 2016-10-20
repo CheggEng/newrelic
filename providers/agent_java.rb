@@ -16,6 +16,7 @@ action :install do
   # Check license key provided
   check_license
   create_install_directory
+  agent_jar
   generate_agent_config
   allow_app_group_write_to_log_file_path
   install_newrelic
@@ -35,7 +36,7 @@ def create_install_directory
   end
 end
 
-def install_newrelic
+def agent_jar
   zip_file = 'newrelic-java.zip'
   version = new_resource.version
   version = 'current' if version == 'latest'
@@ -53,31 +54,18 @@ def install_newrelic
 
   package 'unzip'
 
-  if new_resource.app_location.nil?
-    app_location = new_resource.install_dir
-  else
-    version = new_resource.version
-    jar_file = "newrelic-agent-#{version}.jar"
-  end
-
-  https_download = "https://download.newrelic.com/newrelic/java-agent/newrelic-agent/#{version}/#{jar_file}"
-
-  remote_file "#{new_resource.install_dir}/newrelic.jar" do
-    source https_download
-    owner new_resource.app_user
+  bash "unzip-#{tmp_file}" do
+    user new_resource.app_user
     group new_resource.app_group
-    mode '0664'
-    action :create
+    action :nothing
+    code <<-EOH
+      unzip -oj "#{tmp_file}" "newrelic/newrelic.jar" -d "#{new_resource.install_dir}"
+    EOH
   end
 end
 
 def generate_agent_config
-  if new_resource.app_location.nil?
-    app_location = new_resource.install_dir
-  else
-    app_location = new_resource.app_location
-  end
-  template "#{app_location.install_dir}/newrelic.yml" do
+  template "#{new_resource.install_dir}/newrelic.yml" do
     cookbook new_resource.template_cookbook
     source new_resource.template_source
     owner new_resource.app_user
@@ -103,8 +91,6 @@ def allow_app_group_write_to_log_file_path
   end
 end
 
-<<<<<<< HEAD
-=======
 def install_newrelic
   jar_file = 'newrelic.jar'
   app_location = if new_resource.app_location.nil?
@@ -119,7 +105,6 @@ def install_newrelic
   end
 end
 
->>>>>>> 6138515120fcda69bee085da0885ff9a39de5f3b
 def remove_newrelic
   app_location = if new_resource.app_location.nil?
                    new_resource.install_dir
