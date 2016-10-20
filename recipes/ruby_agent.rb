@@ -2,12 +2,11 @@
 # Cookbook Name:: newrelic
 # Recipe:: ruby_agent
 #
-# Copyright 2012-2015, Escape Studios
+# Copyright (c) 2016, David Joos
 #
 
 newrelic_agent_ruby 'Install' do
   license NewRelic.application_monitoring_license(node)
-  agent_type 'ruby'
   template_cookbook node['newrelic']['ruby_agent']['template_cookbook'] unless node['newrelic']['ruby_agent']['template_cookbook']
   template_source node['newrelic']['ruby_agent']['template_source'] unless node['newrelic']['ruby_agent']['template_source']
   enabled NewRelic.to_boolean(node['newrelic']['application_monitoring']['enabled']) unless node['newrelic']['application_monitoring']['enabled']

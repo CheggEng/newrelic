@@ -2,7 +2,7 @@
 # Cookbook Name:: newrelic
 # Recipe:: php_agent
 #
-# Copyright 2012-2015, Escape Studios
+# Copyright (c) 2016, David Joos
 #
 
 newrelic_agent_php 'Install' do
@@ -14,6 +14,7 @@ newrelic_agent_php 'Install' do
   install_silently node['newrelic']['php_agent']['install_silently'] unless node['newrelic']['php_agent']['install_silently'].nil?
   config_file_to_be_deleted node['newrelic']['php_agent']['config_file_to_be_deleted'] unless node['newrelic']['php_agent']['config_file_to_be_deleted'].nil?
   service_name node['newrelic']['php_agent']['web_server']['service_name'] unless node['newrelic']['php_agent']['web_server']['service_name'].nil?
+  service_action node['newrelic']['php_agent']['web_server']['service_action'] unless node['newrelic']['php_agent']['web_server']['service_action'].nil?
   execute_php5enmod NewRelic.to_boolean(node['newrelic']['php_agent']['execute_php5enmod']) unless node['newrelic']['php_agent']['execute_php5enmod'].nil?
   cookbook_ini node['newrelic']['php_agent']['template']['cookbook_ini'] unless node['newrelic']['php_agent']['template']['cookbook_ini'].nil?
   source_ini node['newrelic']['php_agent']['template']['source_ini'] unless node['newrelic']['php_agent']['template']['source_ini'].nil?
@@ -53,4 +54,5 @@ newrelic_agent_php 'Install' do
   webtransaction_name_functions node['newrelic']['application_monitoring']['webtransaction']['name']['functions'] unless node['newrelic']['application_monitoring']['webtransaction']['name']['functions'].nil?
   webtransaction_name_files node['newrelic']['application_monitoring']['webtransaction']['name']['files'] unless node['newrelic']['application_monitoring']['webtransaction']['name']['files'].nil?
   cross_application_tracer_enable NewRelic.to_boolean(node['newrelic']['application_monitoring']['cross_application_tracer']['enable']) unless node['newrelic']['application_monitoring']['cross_application_tracer']['enable'].nil?
+  additional_config node['newrelic']['php_agent']['additional_config'] unless node['newrelic']['php_agent']['additional_config'].empty?
 end

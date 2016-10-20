@@ -3,7 +3,7 @@
 # Cookbook Name:: newrelic_poc
 # Recipe:: agent_python
 #
-# Copyright 2012-2015, Escape Studios
+# Copyright (c) 2016, David Joos
 #
 
 include_recipe 'python'
@@ -32,6 +32,6 @@ newrelic_agent_python 'Install' do
   cross_application_tracer_enable false
 end
 
-# newrelic_agent_php 'remove' do
+# newrelic_agent_python 'remove' do
 #  action :remove
 # end

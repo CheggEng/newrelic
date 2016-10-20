@@ -2,13 +2,13 @@
 # Cookbook Name:: newrelic
 # Resource:: agent_php
 #
-# Copyright 2012-2015, Escape Studios
+# Copyright (c) 2016, David Joos
 #
 
 actions :install, :remove
 default_action :install
 
-attribute :license, :kind_of => String, :default => nil
+attribute :license, :kind_of => String, :default => NewRelic.application_monitoring_license(node)
 attribute :config_file, :kind_of => String, :default => nil
 attribute :startup_mode, :kind_of => String, :default => 'agent'
 attribute :app_name, :kind_of => String, :default => nil
@@ -16,6 +16,7 @@ attribute :high_security, :kind_of => [TrueClass, FalseClass], :default => false
 attribute :install_silently, :kind_of => [TrueClass, FalseClass], :default => false
 attribute :config_file_to_be_deleted, :kind_of => String, :default => nil
 attribute :service_name, :kind_of => String, :default => nil
+attribute :service_action, :kind_of => String, :default => 'restart'
 attribute :execute_php5enmod, :kind_of => [TrueClass, FalseClass], :default => false
 attribute :cookbook_ini, :kind_of => String, :default => 'newrelic'
 attribute :source_ini, :kind_of => String, :default => 'agent/php/newrelic.ini.erb'
@@ -56,3 +57,4 @@ attribute :webtransaction_name_remove_trailing_path, :kind_of => [TrueClass, Fal
 attribute :webtransaction_name_functions, :kind_of => String, :default => nil
 attribute :webtransaction_name_files, :kind_of => String, :default => nil
 attribute :cross_application_tracer_enable, :kind_of => [TrueClass, FalseClass], :default => true
+attribute :additional_config, :kind_of => Hash, :default => {}

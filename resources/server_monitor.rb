@@ -2,13 +2,13 @@
 # Cookbook Name:: newrelic
 # Resource:: server_monitor
 #
-# Copyright 2012-2015, Escape Studios
+# Copyright (c) 2016, David Joos
 #
 
 actions :install, :remove
 default_action :install
 
-attribute :license, :kind_of => String, :default => nil
+attribute :license, :kind_of => String, :default => NewRelic.server_monitoring_license(node)
 
 attribute :logfile, :kind_of => String, :default => nil
 attribute :loglevel, :kind_of => String, :default => nil
@@ -21,6 +21,7 @@ attribute :labels, :kind_of => String, :default => nil
 attribute :pidfile, :kind_of => String, :default => nil
 attribute :collector_host, :kind_of => String, :default => nil
 attribute :timeout, :kind_of => String, :default => nil
+attribute :alert_policy_id, :kind_of => String, :default => nil
 
 attribute :config_file_user, :kind_of => String, :default => 'root'
 attribute :service_notify_action, :kind_of => String, :default => 'restart'

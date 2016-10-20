@@ -7,7 +7,7 @@ describe 'newrelic_lwrp_test::agent_ruby' do
 
   context 'Centos' do
     let(:chef_run) do
-      ChefSpec::Runner.new(:log_level => LOG_LEVEL, :platform => 'centos', :version => '6.6', :step_into => ['newrelic_agent_ruby']) do |node|
+      ChefSpec::SoloRunner.new(:log_level => LOG_LEVEL, :platform => 'centos', :version => '6.6', :step_into => ['newrelic_agent_ruby']) do |node|
         stub_node_resources(node)
       end.converge(described_recipe)
     end
@@ -26,6 +26,10 @@ describe 'newrelic_lwrp_test::agent_ruby' do
 
     it 'creates newrelic yml config template from newrelic.yml.erb' do
       expect(chef_run).to render_file('/opt/newrelic/ruby/newrelic.yml').with_content('0000ffff0000ffff0000ffff0000ffff0000ffff')
+    end
+
+    it 'installs rubygems from yum' do
+      expect(chef_run).to install_package('rubygems')
     end
   end
 end
