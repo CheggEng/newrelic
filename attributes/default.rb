@@ -2,7 +2,7 @@
 # Cookbook Name:: newrelic
 # Attributes:: default
 #
-# Copyright 2012-2015, Escape Studios
+# Copyright (c) 2016, David Joos
 #
 
 ##############
@@ -12,6 +12,7 @@
 default['newrelic']['license'] = nil
 default['newrelic']['server_monitoring']['license'] = nil
 default['newrelic']['application_monitoring']['license'] = nil
+default['newrelic']['api_key'] = nil
 
 # proxy
 default['newrelic']['proxy'] = nil

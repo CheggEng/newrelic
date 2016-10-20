@@ -2,7 +2,7 @@
 # Cookbook Name:: newrelic
 # Provider:: agent_php
 #
-# Copyright 2012-2015, Escape Studios
+# Copyright (c) 2016, David Joos
 #
 
 # include helper methods
@@ -19,7 +19,7 @@ action :install do
   check_license
 
   # check config_file attribute value
-  fail "Please specify the path to your New Relic php agent config file (#{new_resource.config_file})" if new_resource.config_file.nil?
+  raise "Please specify the path to your New Relic php agent config file (#{new_resource.config_file})" if new_resource.config_file.nil?
 
   newrelic_repository
   newrelic_php5_broken
@@ -72,7 +72,7 @@ def newrelic_install
       )
     end
     action :nothing
-    notifies :reload, "service[#{new_resource.service_name}]", :delayed if new_resource.service_name
+    notifies new_resource.service_action, "service[#{new_resource.service_name}]", :delayed if new_resource.service_name
   end
 end
 
@@ -89,33 +89,33 @@ def webserver_service
 end
 
 def newrelic_php5enmod
-  execute_php5enmod = new_resource.execute_php5enmod ? 'true' : 'false'
+  execute_php5enmod = new_resource.execute_php5enmod
+
   # run php5enmod newrelic
   execute 'newrelic-php5enmod' do
     command 'php5enmod newrelic'
     action :nothing
-    only_if execute_php5enmod
+    only_if { execute_php5enmod == true }
   end
 end
 
 def generate_agent_config
   # configure New Relic INI file and set the daemon related options (documented at /usr/lib/newrelic-php5/scripts/newrelic.ini.template)
-  # and reload the web server in order to pick up the new settings
-  execute_php5enmod = new_resource.execute_php5enmod ? 'true' : 'false'
+  # and reload/restart (determined by service_action) the web server in order to pick up the new settings
   template new_resource.config_file do
     cookbook new_resource.cookbook_ini
     source new_resource.source_ini
     owner 'root'
     group 'root'
-    mode 0644
+    mode '0644'
     variables(
       :resource => new_resource
     )
+    sensitive true
     action :create
-    if execute_php5enmod
-      notifies :run, 'execute[newrelic-php5enmod]', :immediately
-    end
-    notifies :reload, "service[#{new_resource.service_name}]", :delayed if new_resource.service_name
+
+    notifies :run, 'execute[newrelic-php5enmod]', :immediately if new_resource.execute_php5enmod == true
+    notifies new_resource.service_action, "service[#{new_resource.service_name}]", :delayed if new_resource.service_name
   end
 end
 
@@ -136,8 +136,10 @@ def startup_mode_config
   when 'agent'
     # agent startup mode
     # ensure that the daemon isn't currently running
+    # only stop the daemon if it has not been run by the agent (with a newrelic.cfg)
     service 'newrelic-daemon' do
       action [:disable, :stop] # stops the service if it's running and disables it from starting at system boot time
+      only_if { ::File.exist?('/etc/newrelic/newrelic.cfg') }
     end
     # ensure that the file /etc/newrelic/newrelic.cfg does not exist if it does, move it aside (or remove it)
     execute 'newrelic-backup-cfg' do
@@ -157,19 +159,19 @@ def startup_mode_config
       source new_resource.source
       owner 'root'
       group 'root'
-      mode 0644
+      mode '0644'
       variables(
         :resource => new_resource
       )
       action :create
       notifies :restart, 'service[newrelic-daemon]', :immediately
-      notifies :reload, "service[#{new_resource.service_name}]", :delayed if new_resource.service_name
+      notifies new_resource.service_action, "service[#{new_resource.service_name}]", :delayed if new_resource.service_name
     end
     service 'newrelic-daemon' do
       action [:enable, :start] # starts the service if it's not running and enables it to start at system boot time
     end
   else
-    fail "#{new_resource.startup_mode} is not a valid newrelic-daemon startup mode."
+    raise "#{new_resource.startup_mode} is not a valid newrelic-daemon startup mode."
   end
 end
 
