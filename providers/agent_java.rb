@@ -45,13 +45,6 @@ def agent_jar
   cache_dir = Chef::Config[:file_cache_path]
   tmp_file = "#{cache_dir}/#{zip_file}"
 
-  remote_file tmp_file do
-    source https_download
-    mode '0664'
-    action :create
-    notifies :run, "bash[unzip-#{tmp_file}]", :immediately
-  end
-
   package 'unzip'
 
   bash "unzip-#{tmp_file}" do
@@ -62,6 +55,14 @@ def agent_jar
       unzip -oj "#{tmp_file}" "newrelic/newrelic.jar" -d "#{new_resource.install_dir}"
     EOH
   end
+
+  remote_file tmp_file do
+    source https_download
+    mode '0664'
+    action :create
+    notifies :run, "bash[unzip-#{tmp_file}]", :immediately
+  end
+
 end
 
 def generate_agent_config
