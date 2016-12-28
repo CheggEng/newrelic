@@ -37,32 +37,40 @@ def create_install_directory
 end
 
 def agent_jar
-  zip_file = 'newrelic-java.zip'
-  version = new_resource.version
-  version = 'current' if version == 'latest'
-  https_download = "https://download.newrelic.com/newrelic/java-agent/newrelic-agent/#{version}/#{zip_file}"
-
-  cache_dir = Chef::Config[:file_cache_path]
-  tmp_file = "#{cache_dir}/#{zip_file}"
-
   package 'unzip'
 
-  bash "unzip-#{tmp_file}" do
+  version = if new_resource.version == 'latest'
+              'current'
+            else
+              new_resource.version
+            end
+
+  filename = if new_resource.version == 'latest'
+               'newrelic-java.zip'
+             else
+               "newrelic-java-#{new_resource.version}.zip"
+             end
+
+  https_download = "https://download.newrelic.com/newrelic/java-agent/newrelic-agent/#{version}/#{filename}"
+
+  cache_dir = Chef::Config[:file_cache_path]
+
+  remote_file "#{new_resource.install_dir}/newrelic.zip" do
+    source https_download
     user new_resource.app_user
     group new_resource.app_group
-    action :nothing
-    code <<-EOH
-      unzip -oj "#{tmp_file}" "newrelic/newrelic.jar" -d "#{new_resource.install_dir}"
-    EOH
-  end
-
-  remote_file tmp_file do
-    source https_download
     mode '0664'
     action :create
-    notifies :run, "bash[unzip-#{tmp_file}]", :immediately
+    notifies :run, 'execute[newrelic-extract-jar]', :immediately
   end
 
+  execute 'newrelic-extract-jar' do
+    cwd new_resource.install_dir
+    user new_resource.app_user
+    group new_resource.app_group
+    command 'unzip -oj newrelic.zip newrelic/newrelic.jar'
+    action :nothing
+  end
 end
 
 def generate_agent_config
@@ -101,7 +109,7 @@ def install_newrelic
                  end
   execute "newrelic_install_#{jar_file}" do
     cwd new_resource.install_dir
-    command "sudo java -jar newrelic.jar -s #{app_location} install"
+    command "sudo java -jar newrelic.jar -s #{app_location} #{new_resource.agent_action}"
     only_if { new_resource.execute_agent_action == true }
   end
 end
